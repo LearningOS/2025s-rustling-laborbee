@@ -2,7 +2,6 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -23,7 +22,7 @@ where
     pub fn new(comparator: fn(&T, &T) -> bool) -> Self {
         Self {
             count: 0,
-            items: vec![T::default()],
+            items: vec![T::default()], // Start with a dummy value at index 0
             comparator,
         }
     }
@@ -37,15 +36,13 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count += 1;
+        self.bubble_up(self.count);
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
         idx / 2
-    }
-
-    fn children_present(&self, idx: usize) -> bool {
-        self.left_child_idx(idx) <= self.count
     }
 
     fn left_child_idx(&self, idx: usize) -> usize {
@@ -57,8 +54,53 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left_idx = self.left_child_idx(idx);
+        let right_idx = self.right_child_idx(idx);
+
+        if right_idx <= self.count && (self.comparator)(&self.items[right_idx], &self.items[left_idx]) {
+            right_idx
+        } else {
+            left_idx
+        }
+    }
+
+    fn bubble_up(&mut self, idx: usize) {
+        let mut current_idx = idx;
+
+        while current_idx > 1 {
+            let parent_idx = self.parent_idx(current_idx);
+            if (self.comparator)(&self.items[current_idx], &self.items[parent_idx]) {
+                self.items.swap(current_idx, parent_idx);
+                current_idx = parent_idx;
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn bubble_down(&mut self, idx: usize) {
+        let mut current_idx = idx;
+
+        loop {
+            let left_idx = self.left_child_idx(current_idx);
+            let right_idx = self.right_child_idx(current_idx);
+            let mut smallest_idx = current_idx;
+
+            if left_idx <= self.count && (self.comparator)(&self.items[left_idx], &self.items[smallest_idx]) {
+                smallest_idx = left_idx;
+            }
+
+            if right_idx <= self.count && (self.comparator)(&self.items[right_idx], &self.items[smallest_idx]) {
+                smallest_idx = right_idx;
+            }
+
+            if smallest_idx != current_idx {
+                self.items.swap(current_idx, smallest_idx);
+                current_idx = smallest_idx;
+            } else {
+                break;
+            }
+        }
     }
 }
 
@@ -79,13 +121,26 @@ where
 
 impl<T> Iterator for Heap<T>
 where
-    T: Default,
+    T: Default + Clone,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.is_empty() {
+            None
+        } else {
+            // Root is the smallest element in MinHeap or largest in MaxHeap
+            let root = self.items[1].clone();
+            self.items.swap(1, self.count);
+            self.count -= 1;
+            self.items.pop(); // Remove the last element
+
+            if !self.is_empty() {
+                self.bubble_down(1); // Restore the heap property
+            }
+
+            Some(root)
+        }
     }
 }
 
